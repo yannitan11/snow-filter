@@ -14,8 +14,9 @@
 import { CameraFeed, CAMERA_STATE, describeCameraError } from "./camera.js";
 import { Detector } from "./detection.js";
 import { SnowSystem } from "./snow.js";
+import { Doodles } from "./doodles.js";
 import { UI } from "./ui.js";
-import { RENDER, PERF, SNOW, SEASONS, SEASONS_ENABLED } from "./config.js";
+import { RENDER, PERF, SNOW, SEASONS, SEASONS_ENABLED, WINTER_STYLES } from "./config.js";
 
 const canvas = document.getElementById("stage");
 const ctx = canvas.getContext("2d", { alpha: false });
@@ -23,6 +24,7 @@ const ctx = canvas.getContext("2d", { alpha: false });
 const camera = new CameraFeed();
 const detector = new Detector();
 const snow = new SnowSystem();
+const doodles = new Doodles();
 
 let running = false;
 let snowOn = true;
@@ -34,6 +36,11 @@ let lastVideoTime = -1;
 const SEASON_KEY = "seasonfilter.season";
 let seasonIx = loadSeason();
 let clearColor = SEASONS[seasonIx].tint;
+
+// --- winter style: pull-cord cycles snow / snow+doodles / doodles
+const STYLE_KEY = "seasonfilter.style";
+let styleIx = loadStyle();
+let snowActive = true; // does the current style include falling snow?
 
 // --- adaptive perf state
 let detectEvery = 1; // run detection every N frames
@@ -49,8 +56,30 @@ const ui = new UI({
   onToggleSnow: toggleSnow,
   onReset: () => snow.reset(),
   onFlip: flipCamera,
-  onSeason: nextSeason,
+  // In snow-only mode the cord switches style; otherwise it changes season.
+  onSeason: SEASONS_ENABLED ? nextSeason : cycleStyle,
 });
+
+// ---------------------------------------------------------------- styles
+function loadStyle() {
+  const n = parseInt(localStorage.getItem(STYLE_KEY) ?? "0", 10);
+  return Number.isInteger(n) && n >= 0 && n < WINTER_STYLES.length ? n : 0;
+}
+
+function applyStyle({ announce = true } = {}) {
+  const st = WINTER_STYLES[styleIx];
+  snowActive = st.id !== "doodle"; // "doodle" style turns the snow off
+  doodles.setVisible(st.id !== "snow"); // doodles show in "both" and "doodle"
+  ui.setStyle(st, { announce });
+  try {
+    localStorage.setItem(STYLE_KEY, String(styleIx));
+  } catch {}
+}
+
+function cycleStyle() {
+  styleIx = (styleIx + 1) % WINTER_STYLES.length;
+  applyStyle();
+}
 
 // ---------------------------------------------------------------- seasons
 function loadSeason() {
@@ -187,8 +216,8 @@ function loop() {
       if (detector.handsReady) snow.hands(mapping, detector.hands, time);
     }
 
-    // ---- snow: update + render (OFF = frozen + hidden, camera stays live)
-    if (snowOn) {
+    // ---- snow: update + render (OFF or doodle-only style = hidden, camera stays)
+    if (snowOn && snowActive) {
       snow.update(dt, time, mapping, detector, true);
       snow.render(ctx);
     }
@@ -226,5 +255,5 @@ document.addEventListener("visibilitychange", () => {
 });
 
 applySeason({ announce: false }); // set the remembered season without a flash
-if (!SEASONS_ENABLED) ui.hidePullCord(); // snow-only: no season switching
+applyStyle({ announce: false }); // apply the remembered snow/doodle style (shows cord)
 ui.showLanding();

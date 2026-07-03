@@ -48,10 +48,18 @@ export const SNOW = {
   fallLifetime: 14,
 };
 
-// Feature flag: when false, the app is SNOW-ONLY — the season pull-cord is
-// hidden and the effect is locked to Winter. Flip to true to re-enable the full
+// Feature flag: when false, the app is SNOW-ONLY — season switching is off and
+// the effect is locked to Winter. Flip to true to re-enable the full
 // four-season experience; all the season code stays intact either way.
 export const SEASONS_ENABLED = false;
+
+// In snow-only mode the pull cord becomes a STYLE switch, cycled in order:
+//   snow → snow + doodles → doodles (snow off) → …
+export const WINTER_STYLES = [
+  { id: "snow", label: "Snow", emoji: "❄️" },
+  { id: "both", label: "Snow + doodles", emoji: "✨" },
+  { id: "doodle", label: "Doodles", emoji: "🎨" },
+];
 
 // ---------------------------------------------------------------- Seasons
 // The app is one particle engine themed per season. Each season sets its own
@@ -90,6 +98,12 @@ export const SEASONS = [
       rotate: false,
       spin: 0,
       drawScale: 5,
+      // Concentrate snow above the person (central band); the sides get only
+      // sparse, smaller, fainter flakes so they stay subtle.
+      emitCenterBias: 0.72, // fraction of flakes emitted in the centre band
+      emitSpread: 0.2, // band half-width as a fraction of the frame width
+      ambientSizeScale: 0.62, // side flakes are smaller…
+      ambientAlphaScale: 0.58, // …and fainter
     },
   },
   {

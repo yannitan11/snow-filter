@@ -160,6 +160,17 @@ export class UI {
     if (this.pull) this.pull.style.display = "none";
   }
 
+  // Snow-only mode: the cord is a style switch (snow / snow+doodles / doodles).
+  setStyle(style, { announce = true } = {}) {
+    this.pullEmoji.textContent = style.emoji;
+    if (announce) {
+      this.seasonName.textContent = `${style.emoji} ${style.label}`;
+      this.seasonName.classList.remove("show");
+      void this.seasonName.offsetWidth;
+      this.seasonName.classList.add("show");
+    }
+  }
+
   // Reflect a season change: cord emoji, toggle label, and a brief name flash.
   setSeason(theme, { announce = true } = {}) {
     this._particle = theme.particle;

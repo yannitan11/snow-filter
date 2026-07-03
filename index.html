@@ -25,15 +25,18 @@
       <!-- The camera feed + snow are drawn into this single canvas. -->
       <canvas id="stage"></canvas>
 
+      <!-- Hand-drawn winter doodle overlay (toggled by the pull cord). -->
+      <div id="doodles" aria-hidden="true"></div>
+
       <!-- Landing (shown first; no camera prompt until the user taps) -->
       <section id="landing" class="screen show">
         <div class="card">
           <div class="hero">❄️</div>
           <h1>Snow Filter</h1>
           <p>
-            Turn on your camera and let it snow. Snow gathers along your head,
-            shoulders and arms — wave a hand to brush it away, or squeeze a
-            handful into a snowball and throw it.
+            Turn on your camera and let it snow. Snow gathers along your head
+            and shoulders — wave a hand to brush it away, or squeeze a handful
+            into a snowball and throw it. Pull the cord to add winter doodles.
           </p>
           <button id="start-btn" class="primary">Turn on camera</button>
           <p class="fine">
@@ -109,6 +112,7 @@
             <li><b>Wave a hand</b> through the snow to fling it off to the sides.</li>
             <li><b>Make a fist</b> near the snow to squeeze it into a snowball…</li>
             <li>…then <b>open your palm</b> to throw it — flick as you release!</li>
+            <li><b>Pull the cord</b> to switch style: snow → snow + doodles → doodles.</li>
             <li><b>Snow ON/OFF</b> pauses it; the circle button clears everything.</li>
           </ul>
           <p class="fine">

@@ -249,6 +249,73 @@ h2 {
   }
 }
 
+/* ---------------------------------------------------- Winter doodles */
+#doodles {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+#doodles.show {
+  opacity: 1;
+}
+.doodle {
+  position: absolute;
+  transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+  color: #fff;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.28));
+}
+.doodle svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.doodle.tw {
+  animation: dtw 3.2s ease-in-out infinite;
+}
+.doodle.fl {
+  animation: dfl 6s ease-in-out infinite;
+}
+.doodle.pp {
+  animation: dpp 2.6s ease-in-out infinite;
+}
+@keyframes dtw {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes dfl {
+  0%, 100% {
+    transform: translate(-50%, -50%) rotate(var(--r, 0deg)) translateY(0);
+  }
+  50% {
+    transform: translate(-50%, calc(-50% - 8px)) rotate(var(--r, 0deg));
+  }
+}
+@keyframes dpp {
+  0%, 100% {
+    transform: translate(-50%, -50%) rotate(var(--r, 0deg)) scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(var(--r, 0deg)) scale(1.08);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .doodle.tw,
+  .doodle.fl,
+  .doodle.pp {
+    animation: none;
+  }
+}
+
 /* -------------------------------------------------------- Pull cord */
 .pull {
   position: absolute;

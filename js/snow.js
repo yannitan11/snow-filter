@@ -98,13 +98,27 @@ export class SnowSystem {
     const i = this.free[--this.freeTop];
     const s = rand(p.sizeMin, p.sizeMax);
     const depth = (s - p.sizeMin) / Math.max(0.001, p.sizeMax - p.sizeMin); // 0..1
-    this.px[i] = rand(-40, mapping.cW + 40);
+
+    // Emission: most flakes drop in a central band (over the person); the rest
+    // are sparse "ambient" flakes across the full width, made smaller/fainter
+    // so the sides stay subtle.
+    let ambient = false;
+    if (p.emitCenterBias && Math.random() < p.emitCenterBias) {
+      const g = (Math.random() + Math.random() + Math.random() - 1.5) / 1.5; // ~gaussian
+      this.px[i] = mapping.cW * 0.5 + g * (mapping.cW * (p.emitSpread || 0.2));
+    } else {
+      ambient = !!p.emitCenterBias;
+      this.px[i] = rand(-40, mapping.cW + 40);
+    }
     this.py[i] = rand(-60, -10);
     this.vx[i] = rand(-8, 8);
     this.vy[i] = rand(10, 40) * (0.6 + depth);
     this.gv[i] = p.gravity - p.gravityVar * (1 - depth);
-    this.size[i] = s;
-    this.baseAlpha[i] = rand(p.alphaMin, p.alphaMax) * (0.6 + 0.4 * depth);
+    this.size[i] = ambient ? s * (p.ambientSizeScale || 1) : s;
+    this.baseAlpha[i] =
+      rand(p.alphaMin, p.alphaMax) *
+      (0.6 + 0.4 * depth) *
+      (ambient ? p.ambientAlphaScale || 1 : 1);
     this.alpha[i] = this.baseAlpha[i];
     this.phase[i] = rand(0, Math.PI * 2);
     this.freq[i] = p.flutter ? rand(p.flutterFreqMin, p.flutterFreqMax) : 0;
