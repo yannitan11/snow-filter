@@ -39,6 +39,7 @@ export class SnowSystem {
     this.baseAlpha = new Float32Array(N);
     this.alpha = new Float32Array(N);
     this.phase = new Float32Array(N); // sway/shimmer phase
+    this.freq = new Float32Array(N); // per-particle flutter frequency (rad/s)
     this.rot = new Float32Array(N); // sprite rotation (rad)
     this.rotV = new Float32Array(N); // spin rate (rad/s)
     this.spriteIx = new Uint8Array(N); // which season sprite this one draws
@@ -106,6 +107,7 @@ export class SnowSystem {
     this.baseAlpha[i] = rand(p.alphaMin, p.alphaMax) * (0.6 + 0.4 * depth);
     this.alpha[i] = this.baseAlpha[i];
     this.phase[i] = rand(0, Math.PI * 2);
+    this.freq[i] = p.flutter ? rand(p.flutterFreqMin, p.flutterFreqMax) : 0;
     this.rot[i] = rand(0, Math.PI * 2);
     this.rotV[i] = p.rotate ? rand(-p.spin, p.spin) : 0;
     this.spriteIx[i] = (Math.random() * this.sprites.length) | 0;
@@ -193,13 +195,25 @@ export class SnowSystem {
       }
 
       // ---- falling: integrate motion
-      const sway = p.sway * Math.sin(time * 1.3 + this.phase[i]);
-      const targetVx = globalWind + sway;
-      this.vx[i] += (targetVx - this.vx[i]) * Math.min(1, dt * 1.8);
-      this.vy[i] += this.gv[i] * dt;
-      this.px[i] += this.vx[i] * dt;
-      this.py[i] += this.vy[i] * dt;
-      if (this.rotV[i]) this.rot[i] += this.rotV[i] * dt;
+      if (p.flutter) {
+        // Petals seesaw horizontally at their own frequency, with a coupled
+        // vertical bob, so they tumble down instead of drifting straight.
+        const ph = time * this.freq[i] + this.phase[i];
+        const targetVx = globalWind + p.flutterAmp * Math.sin(ph);
+        this.vx[i] += (targetVx - this.vx[i]) * Math.min(1, dt * 2.4);
+        this.vy[i] += this.gv[i] * dt;
+        this.px[i] += this.vx[i] * dt;
+        this.py[i] += (this.vy[i] + p.bob * Math.cos(ph)) * dt;
+        this.rot[i] += this.rotV[i] * dt;
+      } else {
+        const sway = p.sway * Math.sin(time * 1.3 + this.phase[i]);
+        const targetVx = globalWind + sway;
+        this.vx[i] += (targetVx - this.vx[i]) * Math.min(1, dt * 1.8);
+        this.vy[i] += this.gv[i] * dt;
+        this.px[i] += this.vx[i] * dt;
+        this.py[i] += this.vy[i] * dt;
+        if (this.rotV[i]) this.rot[i] += this.rotV[i] * dt;
+      }
       this.life[i] -= dt;
 
       // off-screen / expired → recycle
@@ -512,9 +526,11 @@ function buildSprites(theme) {
   if (theme.shape === "dot") {
     for (const c of theme.palette) out.push(dotSprite(S, c));
   } else if (theme.shape === "petal") {
+    // Mostly loose petals; whole blossoms stay an occasional accent.
     for (const c of theme.palette) {
       out.push(petalSprite(S, c));
-      out.push(petalSprite(S, c)); // weight loose petals over whole flowers
+      out.push(petalSprite(S, c));
+      out.push(petalSprite(S, c));
     }
     for (const c of theme.blossom || []) out.push(blossomSprite(S, c));
   } else if (theme.shape === "leaf") {
@@ -551,24 +567,29 @@ function dotSprite(S, color) {
   return c;
 }
 
-// A single teardrop petal, pointing up, with a soft edge and gentle shading.
+// A single sakura petal: narrow at the stem (top), widening to a rounded lobe
+// with the characteristic little notch at the outer tip (bottom), plus a soft
+// sheen and glow.
 function petalSprite(S, color) {
   const c = makeCanvas(S);
   const g = c.getContext("2d");
   const rgb = hexRgb(color);
   g.translate(S / 2, S / 2);
-  const h = S * 0.42,
-    w = S * 0.24;
-  g.shadowColor = rgba(rgb, 0.5);
-  g.shadowBlur = S * 0.06;
+  const h = S * 0.42, // half-length (stem at -h, tip at +h)
+    w = S * 0.23; // half-width at the widest point
+  g.shadowColor = rgba(rgb, 0.45);
+  g.shadowBlur = S * 0.07;
+  // Sheen runs down the length of the petal.
   const grd = g.createLinearGradient(0, -h, 0, h);
-  grd.addColorStop(0, rgba(lighten(rgb, 0.35), 1));
+  grd.addColorStop(0, rgba(lighten(rgb, 0.5), 1));
+  grd.addColorStop(0.5, rgba(lighten(rgb, 0.18), 1));
   grd.addColorStop(1, rgba(rgb, 1));
   g.fillStyle = grd;
   g.beginPath();
-  g.moveTo(0, -h);
-  g.bezierCurveTo(w, -h * 0.4, w, h * 0.6, 0, h);
-  g.bezierCurveTo(-w, h * 0.6, -w, -h * 0.4, 0, -h);
+  g.moveTo(0, -h); // stem point
+  g.bezierCurveTo(w, -h * 0.35, w * 0.95, h * 0.65, w * 0.28, h * 0.98); // right edge → tip
+  g.quadraticCurveTo(0, h * 0.74, -w * 0.28, h * 0.98); // notch dip at the tip
+  g.bezierCurveTo(-w * 0.95, h * 0.65, -w, -h * 0.35, 0, -h); // left edge → stem
   g.closePath();
   g.fill();
   return c;

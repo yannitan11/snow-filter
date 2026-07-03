@@ -96,22 +96,31 @@ export const SEASONS = [
     tint: "#120a12",
     blend: "source-over",
     shape: "petal",
-    palette: ["#ffd3e4", "#ffb3d1", "#ff9ec7", "#ffe0ec", "#ffc7a8"],
-    blossom: ["#ffd3e4", "#ffb3d1", "#ffffff"], // occasional whole flowers
+    // Soft sakura tones — blush pinks + a couple of near-whites for depth.
+    palette: ["#ffdbe8", "#ffc2d8", "#ffb0cd", "#fff2f6", "#ffcfe0", "#ff9ec7"],
+    blossom: ["#ffe0ec", "#ffc2d6"], // rarer whole flowers
     phys: {
-      gravity: 88,
-      gravityVar: 46,
-      wind: 40,
-      sway: 62, // big flutter — petals drift side to side
+      gravity: 74, // slower, more graceful than snow
+      gravityVar: 40,
+      wind: 34,
+      sway: 0, // superseded by flutter below
       emit: 300,
       sizeMin: 7,
-      sizeMax: 13,
-      alphaMin: 0.85,
+      sizeMax: 14,
+      alphaMin: 0.82,
       alphaMax: 1.0,
-      life: 16,
+      life: 18,
       rotate: true,
-      spin: 2.4,
+      spin: 1.7, // calmer tumble
       drawScale: 3,
+      // Fluttering fall: each petal seesaws horizontally at its own frequency
+      // with a coupled vertical bob, so it tumbles like a real petal instead
+      // of drifting straight down.
+      flutter: true,
+      flutterAmp: 76, // px/s horizontal sway
+      flutterFreqMin: 0.7,
+      flutterFreqMax: 1.7,
+      bob: 44, // px/s vertical speed-up/slow-down through the swing
     },
   },
   {
