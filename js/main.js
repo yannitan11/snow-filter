@@ -15,7 +15,7 @@ import { CameraFeed, CAMERA_STATE, describeCameraError } from "./camera.js";
 import { Detector } from "./detection.js";
 import { SnowSystem } from "./snow.js";
 import { UI } from "./ui.js";
-import { RENDER, PERF, SNOW, SEASONS } from "./config.js";
+import { RENDER, PERF, SNOW, SEASONS, SEASONS_ENABLED } from "./config.js";
 
 const canvas = document.getElementById("stage");
 const ctx = canvas.getContext("2d", { alpha: false });
@@ -54,6 +54,7 @@ const ui = new UI({
 
 // ---------------------------------------------------------------- seasons
 function loadSeason() {
+  if (!SEASONS_ENABLED) return 0; // snow-only: locked to Winter
   const n = parseInt(localStorage.getItem(SEASON_KEY) ?? "0", 10);
   return Number.isInteger(n) && n >= 0 && n < SEASONS.length ? n : 0;
 }
@@ -71,6 +72,7 @@ function applySeason({ announce = true } = {}) {
 }
 
 function nextSeason() {
+  if (!SEASONS_ENABLED) return; // snow-only: switching disabled
   seasonIx = (seasonIx + 1) % SEASONS.length;
   applySeason();
 }
@@ -224,4 +226,5 @@ document.addEventListener("visibilitychange", () => {
 });
 
 applySeason({ announce: false }); // set the remembered season without a flash
+if (!SEASONS_ENABLED) ui.hidePullCord(); // snow-only: no season switching
 ui.showLanding();

@@ -48,6 +48,11 @@ export const SNOW = {
   fallLifetime: 14,
 };
 
+// Feature flag: when false, the app is SNOW-ONLY — the season pull-cord is
+// hidden and the effect is locked to Winter. Flip to true to re-enable the full
+// four-season experience; all the season code stays intact either way.
+export const SEASONS_ENABLED = false;
+
 // ---------------------------------------------------------------- Seasons
 // The app is one particle engine themed per season. Each season sets its own
 // look (shape, palette, blend) and physics (fall/flutter/rotation/size); the

@@ -155,6 +155,11 @@ export class UI {
     this.flipBtn.hidden = !visible;
   }
 
+  // Snow-only mode: hide the season cord entirely.
+  hidePullCord() {
+    if (this.pull) this.pull.style.display = "none";
+  }
+
   // Reflect a season change: cord emoji, toggle label, and a brief name flash.
   setSeason(theme, { announce = true } = {}) {
     this._particle = theme.particle;
