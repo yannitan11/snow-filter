@@ -61,6 +61,10 @@ export const COLLISION = {
   settleChance: 0.75,
   // Cap on settled flakes so accumulation never gets infinitely heavy.
   maxSettled: 1400,
+  // Hide falling flakes that pass IN FRONT of the body, so snow never covers
+  // the face — it reads as snow falling behind you and settling on top. The
+  // glowing rim (settled flakes on top-facing edges) still shows.
+  occludeInFront: true,
   // A settled flake sloughs off after this long, regaining downward velocity.
   settledLifetime: 6,
   // Gentle shimmer applied to settled flakes so the rim glitters.

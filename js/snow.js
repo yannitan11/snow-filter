@@ -35,6 +35,7 @@ export class SnowSystem {
     this.life = new Float32Array(N);
     this.state = new Uint8Array(N); // 0 falling, 1 settled
     this.active = new Uint8Array(N);
+    this.occluded = new Uint8Array(N); // 1 = in front of body → hidden (behind)
     this.free = new Int32Array(N);
     for (let i = 0; i < N; i++) this.free[i] = N - 1 - i;
     this.freeTop = N; // number of slots on the free stack
@@ -110,6 +111,7 @@ export class SnowSystem {
 
       if (this.state[i] === 1) {
         // ---- settled: hold position, shimmer, slough off, or get dislodged
+        this.occluded[i] = 0; // the rim always shows
         this.life[i] -= dt;
         const shimmer =
           1 - COLLISION.shimmer * (0.5 + 0.5 * Math.sin(time * 6 + this.phase[i]));
@@ -151,24 +153,35 @@ export class SnowSystem {
         continue;
       }
 
-      // ---- collision: settle on a top-facing edge of the body
-      if (hasMask && this.vy[i] > 0 && this.settled < COLLISION.maxSettled) {
+      // ---- body collision + occlusion (one mask sample)
+      if (hasMask) {
         const nx = 1 - (this.px[i] - mapping.offsetX) * invDispW;
         const ny = (this.py[i] - mapping.offsetY) * invDispH;
-        if (nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1) {
-          const here = detector.personProbAt(nx, ny);
-          if (here >= thr) {
-            const nyAbove = (this.py[i] - COLLISION.edgeProbe - mapping.offsetY) * invDispH;
-            const above = detector.personProbAt(nx, nyAbove);
-            if (above < thr && Math.random() < COLLISION.settleChance) {
-              this.state[i] = 1;
-              this.vx[i] = 0;
-              this.vy[i] = 0;
-              this.life[i] = COLLISION.settledLifetime + rand(0, 2);
-              this.settled++;
-            }
+        let here = 0;
+        if (nx >= 0 && nx <= 1 && ny >= 0 && ny <= 1)
+          here = detector.personProbAt(nx, ny);
+
+        // Snow over the body is behind the person — hide it so flakes never
+        // cover the face/body; only the settled rim shows on the person.
+        this.occluded[i] = COLLISION.occludeInFront && here >= thr ? 1 : 0;
+
+        // Settle on a top-facing edge (head/shoulders) → the glowing rim.
+        if (here >= thr && this.vy[i] > 0 && this.settled < COLLISION.maxSettled) {
+          const nyAbove = (this.py[i] - COLLISION.edgeProbe - mapping.offsetY) * invDispH;
+          if (
+            detector.personProbAt(nx, nyAbove) < thr &&
+            Math.random() < COLLISION.settleChance
+          ) {
+            this.state[i] = 1;
+            this.vx[i] = 0;
+            this.vy[i] = 0;
+            this.life[i] = COLLISION.settledLifetime + rand(0, 2);
+            this.settled++;
+            this.occluded[i] = 0; // this flake is now the rim → show it
           }
         }
+      } else {
+        this.occluded[i] = 0;
       }
     }
   }
@@ -247,7 +260,7 @@ export class SnowSystem {
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
     for (let i = 0; i < this.capacity; i++) {
-      if (!this.active[i]) continue;
+      if (!this.active[i] || this.occluded[i]) continue;
       const draw = this.size[i] * 5; // sprite has a soft falloff → glow halo
       ctx.globalAlpha = this.alpha[i];
       ctx.drawImage(
