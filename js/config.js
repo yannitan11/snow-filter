@@ -96,9 +96,22 @@ export const SEASONS = [
     tint: "#120a12",
     blend: "source-over",
     shape: "petal",
-    // Soft sakura tones — blush pinks + a couple of near-whites for depth.
-    palette: ["#ffdbe8", "#ffc2d8", "#ffb0cd", "#fff2f6", "#ffcfe0", "#ff9ec7"],
-    blossom: ["#ffe0ec", "#ffc2d6"], // rarer whole flowers
+    // Loose petals — soft blush + lavender filler between the flowers.
+    palette: ["#ffdbe8", "#ffc2d8", "#ffb0cd", "#fff2f6", "#e9d5ff"],
+    // Cute whole flowers in a cheerful spring mix (5-petal blooms + daisies),
+    // each with a warm glowing centre.
+    flowerColors: [
+      "#ff9ec7", // pink
+      "#ff85b3", // rose
+      "#c8a2ff", // lavender
+      "#9ec7ff", // periwinkle
+      "#ffe07a", // buttercup
+      "#ffb38a", // peach
+      "#ff9e9e", // coral
+      "#fff2f6", // white
+    ],
+    daisyColors: ["#fff2f6", "#ffc2d8", "#c8a2ff", "#9ec7ff"],
+    centers: ["#ffd23f", "#fff0b8", "#ff9d3f"], // warm flower centres
     phys: {
       gravity: 74, // slower, more graceful than snow
       gravityVar: 40,

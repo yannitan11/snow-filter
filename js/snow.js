@@ -526,13 +526,18 @@ function buildSprites(theme) {
   if (theme.shape === "dot") {
     for (const c of theme.palette) out.push(dotSprite(S, c));
   } else if (theme.shape === "petal") {
-    // Mostly loose petals; whole blossoms stay an occasional accent.
+    // Loose petals as filler…
     for (const c of theme.palette) {
       out.push(petalSprite(S, c));
       out.push(petalSprite(S, c));
-      out.push(petalSprite(S, c));
     }
-    for (const c of theme.blossom || []) out.push(blossomSprite(S, c));
+    // …plus a cheerful mix of cute whole flowers in lots of colours.
+    const centers = theme.centers || ["#ffd23f"];
+    (theme.flowerColors || []).forEach((c, i) => {
+      out.push(flowerSprite(S, c, centers[i % centers.length], 5));
+      out.push(flowerSprite(S, c, centers[(i + 1) % centers.length], 6));
+    });
+    (theme.daisyColors || []).forEach((c) => out.push(daisySprite(S, c, "#ffd23f")));
   } else if (theme.shape === "leaf") {
     for (const c of theme.palette) out.push(leafSprite(S, c));
   }
@@ -595,31 +600,75 @@ function petalSprite(S, color) {
   return c;
 }
 
-// A little five-petal blossom with a warm centre (spring accent).
-function blossomSprite(S, color) {
+// A cute whole flower: `petals` plump rounded petals around a glowing centre
+// with a little shine highlight.
+function flowerSprite(S, color, centerColor, petals = 5) {
   const c = makeCanvas(S);
   const g = c.getContext("2d");
   const rgb = hexRgb(color);
   g.translate(S / 2, S / 2);
-  const pr = S * 0.22; // petal reach
-  const pw = S * 0.16; // petal width
-  g.fillStyle = rgba(rgb, 1);
-  g.shadowColor = rgba(rgb, 0.5);
-  g.shadowBlur = S * 0.05;
-  for (let k = 0; k < 5; k++) {
+  g.shadowColor = rgba(rgb, 0.45);
+  g.shadowBlur = S * 0.06;
+  const pr = S * 0.23, // petal-centre distance from middle
+    pw = S * 0.15, // petal half-width (plump = cute)
+    pl = S * 0.19; // petal half-length
+  for (let k = 0; k < petals; k++) {
     g.save();
-    g.rotate((k / 5) * Math.PI * 2);
+    g.rotate((k / petals) * Math.PI * 2);
+    const grd = g.createRadialGradient(0, -pr, 0, 0, -pr, pl * 1.3);
+    grd.addColorStop(0, rgba(lighten(rgb, 0.4), 1));
+    grd.addColorStop(1, rgba(rgb, 1));
+    g.fillStyle = grd;
     g.beginPath();
-    g.ellipse(0, -pr, pw, pr * 0.9, 0, 0, Math.PI * 2);
+    g.ellipse(0, -pr, pw, pl, 0, 0, Math.PI * 2);
     g.fill();
     g.restore();
   }
   g.shadowBlur = 0;
-  g.fillStyle = "rgba(255,214,106,1)"; // pollen centre
-  g.beginPath();
-  g.arc(0, 0, S * 0.09, 0, Math.PI * 2);
-  g.fill();
+  drawCentre(g, S, centerColor);
   return c;
+}
+
+// A daisy: many slim rounded petals around a big centre.
+function daisySprite(S, color, centerColor) {
+  const c = makeCanvas(S);
+  const g = c.getContext("2d");
+  const rgb = hexRgb(color);
+  g.translate(S / 2, S / 2);
+  g.shadowColor = rgba(rgb, 0.4);
+  g.shadowBlur = S * 0.05;
+  const n = 11,
+    pr = S * 0.24,
+    pw = S * 0.055,
+    pl = S * 0.17;
+  g.fillStyle = rgba(rgb, 1);
+  for (let k = 0; k < n; k++) {
+    g.save();
+    g.rotate((k / n) * Math.PI * 2);
+    g.beginPath();
+    g.ellipse(0, -pr, pw, pl, 0, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
+  }
+  g.shadowBlur = 0;
+  drawCentre(g, S, centerColor, 0.13);
+  return c;
+}
+
+// Warm glowing flower centre + a small shine dot (shared by flower/daisy).
+function drawCentre(g, S, centerColor, r = 0.1) {
+  const cr = hexRgb(centerColor);
+  const grd = g.createRadialGradient(0, 0, 0, 0, 0, S * r);
+  grd.addColorStop(0, rgba(lighten(cr, 0.35), 1));
+  grd.addColorStop(1, rgba(cr, 1));
+  g.fillStyle = grd;
+  g.beginPath();
+  g.arc(0, 0, S * r, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = "rgba(255,255,255,0.7)";
+  g.beginPath();
+  g.arc(-S * r * 0.35, -S * r * 0.35, S * r * 0.34, 0, Math.PI * 2);
+  g.fill();
 }
 
 // A pointed leaf with a darker midrib (summer/autumn).
