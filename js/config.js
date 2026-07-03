@@ -89,6 +89,37 @@ export const SWIPE = {
   maxImpulse: 1600, // clamp so a fast swipe can't launch flakes absurdly far
 };
 
+// ------------------------------------------------- Snowball (squeeze/throw)
+export const SNOWBALL = {
+  // Closing your fist gathers snow within this radius of the palm into a ball.
+  // Radius = hand size × scale, clamped to at least `gatherRadiusMin` (sim px).
+  gatherRadiusScale: 1.6,
+  gatherRadiusMin: 80,
+  // While held, the ball keeps soaking up falling snow within this radius.
+  absorbRadius: 40,
+  // Packed radius of the held ball (sim px) — flakes cluster this tightly.
+  coreRadius: 18,
+  // Hard cap on flakes per ball (perf + a tidy, dense look).
+  maxParticles: 340,
+  // Openness (fraction of extended fingers, 0..1) gesture thresholds, with a
+  // gap between them for hysteresis so the state doesn't flicker.
+  closeThreshold: 0.3, // ≤ this → fist (squeeze / hold)
+  openThreshold: 0.7, // ≥ this → open palm (throw)
+  // Throw dynamics.
+  throwScale: 1.7, // launch speed = hand speed × this
+  throwCap: 2400, // clamp launch speed (px/s)
+  throwLift: 200, // upward bias so the ball arcs (px/s)
+  throwSpread: 150, // random scatter added so it bursts, not a laser
+  minThrowSpeed: 130, // slower than this at release → a gentle default toss…
+  defaultThrow: 560, // …at this speed, in the last motion direction (or up)
+  // Hand lost while holding: after this long the ball just drops.
+  dropAfter: 0.35, // seconds
+  removeAfter: 0.8, // seconds missing before the hand slot is forgotten
+  velSmoothing: 0.5, // hand-velocity smoothing (0..1, higher = snappier)
+  // Held-ball flakes stay visible crossing the body for this long after throw.
+  throwGrace: 0.7, // seconds
+};
+
 // ------------------------------------------------------------- Rendering
 export const RENDER = {
   // Device-pixel-ratio cap — keeps the backing store cheap on retina phones.

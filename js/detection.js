@@ -19,13 +19,14 @@ const PALM_LANDMARKS = [0, 5, 9, 13, 17]; // wrist + finger MCPs → stable cent
 export class Detector {
   constructor() {
     this.segmenter = null;
-    this.hands = null;
+    this.handLm = null; // the HandLandmarker model
     this.segReady = false;
     this.handsReady = false;
     // Latest person mask, copied out of MediaPipe's transient buffer.
     this.mask = null; // { data: Float32Array, w, h }
-    // Latest palm centres in video-normalized coords: [{ x, y }].
-    this.palms = [];
+    // Latest hands in video-normalized coords, with gesture metrics:
+    //   { x, y (palm centre), size (hand span), open (0..1 finger openness) }
+    this.hands = [];
     this._segBusy = false;
     this._lastTs = -1;
   }
@@ -70,14 +71,14 @@ export class Detector {
       })(),
       (async () => {
         try {
-          this.hands = await HandLandmarker.createFromOptions(resolver, {
+          this.handLm = await HandLandmarker.createFromOptions(resolver, {
             baseOptions: { modelAssetPath: MP.handModel, delegate: "GPU" },
             runningMode: "VIDEO",
             numHands: MP.numHands,
           });
           this.handsReady = true;
         } catch (e) {
-          console.warn("[snow] HandLandmarker unavailable; no brush-away.", e);
+          console.warn("[snow] HandLandmarker unavailable; no hand gestures.", e);
         }
       })(),
     ]);
@@ -90,18 +91,10 @@ export class Detector {
 
     if (this.handsReady) {
       try {
-        const res = this.hands.detectForVideo(video, ts);
-        this.palms = (res.landmarks || []).map((lm) => {
-          let x = 0,
-            y = 0;
-          for (const i of PALM_LANDMARKS) {
-            x += lm[i].x;
-            y += lm[i].y;
-          }
-          return { x: x / PALM_LANDMARKS.length, y: y / PALM_LANDMARKS.length };
-        });
+        const res = this.handLm.detectForVideo(video, ts);
+        this.hands = (res.landmarks || []).map(handMetrics);
       } catch (e) {
-        // Transient decode hiccup — keep last known palms.
+        // Transient decode hiccup — keep last known hands.
       }
     }
 
@@ -138,4 +131,42 @@ export class Detector {
     const y = Math.min(m.h - 1, (ny * m.h) | 0);
     return m.data[y * m.w + x];
   }
+}
+
+// [tip, pip] pairs for the four fingers (thumb excluded — unreliable for grip).
+const FINGERS = [
+  [8, 6],
+  [12, 10],
+  [16, 14],
+  [20, 18],
+];
+
+// Reduce one hand's 21 landmarks to { x, y, size, open } in video-normalized
+// coords. `open` is the fraction of fingers that are extended (a fingertip is
+// "extended" when it's farther from the wrist than its PIP joint) → 0 = fist,
+// 1 = open palm. `size` is the wrist→middle-MCP span, used to scale the ball.
+function handMetrics(lm) {
+  const wrist = lm[0];
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  let cx = 0,
+    cy = 0;
+  for (const i of PALM_LANDMARKS) {
+    cx += lm[i].x;
+    cy += lm[i].y;
+  }
+  cx /= PALM_LANDMARKS.length;
+  cy /= PALM_LANDMARKS.length;
+
+  let extended = 0;
+  for (const [tip, pip] of FINGERS) {
+    if (dist(lm[tip], wrist) > dist(lm[pip], wrist)) extended++;
+  }
+
+  return {
+    x: cx,
+    y: cy,
+    size: dist(wrist, lm[9]) || 0.001, // wrist → middle-finger MCP
+    open: extended / FINGERS.length,
+  };
 }

@@ -153,7 +153,7 @@ function loop() {
     if (video.currentTime !== lastVideoTime && frameNo % detectEvery === 0) {
       lastVideoTime = video.currentTime;
       detector.detect(video, now);
-      if (detector.handsReady) snow.brush(mapping, detector.palms, time);
+      if (detector.handsReady) snow.hands(mapping, detector.hands, time);
     }
 
     // ---- snow: update + render (OFF = frozen + hidden, camera stays live)
