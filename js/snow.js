@@ -214,6 +214,12 @@ export class SnowSystem {
         this.py[i] += this.vy[i] * dt;
         if (this.rotV[i]) this.rot[i] += this.rotV[i] * dt;
       }
+      if (p.twinkle) {
+        // firefly/sunlight shimmer
+        this.alpha[i] =
+          this.baseAlpha[i] *
+          (1 - p.twinkleAmp * (0.5 + 0.5 * Math.sin(time * p.twinkleSpeed + this.phase[i] * 2.7)));
+      }
       this.life[i] -= dt;
 
       // off-screen / expired → recycle
@@ -540,6 +546,7 @@ function buildSprites(theme) {
     (theme.daisyColors || []).forEach((c) => out.push(daisySprite(S, c, "#ffd23f")));
   } else if (theme.shape === "leaf") {
     for (const c of theme.palette) out.push(leafSprite(S, c));
+    for (const c of theme.palette) out.push(mapleSprite(S, c)); // shape variety
   }
   return out.length ? out : [dotSprite(S, "#ffffff")];
 }
@@ -700,6 +707,44 @@ function leafSprite(S, color) {
   g.beginPath();
   g.moveTo(0, -h * 0.85);
   g.lineTo(0, h * 0.85);
+  g.stroke();
+  return c;
+}
+
+// A stylised maple-ish leaf: five pointed lobes radiating from the stem.
+function mapleSprite(S, color) {
+  const c = makeCanvas(S);
+  const g = c.getContext("2d");
+  const rgb = hexRgb(color);
+  g.translate(S / 2, S / 2 + S * 0.06);
+  g.shadowColor = rgba(rgb, 0.4);
+  g.shadowBlur = S * 0.05;
+  const grd = g.createLinearGradient(0, -S * 0.4, 0, S * 0.1);
+  grd.addColorStop(0, rgba(lighten(rgb, 0.28), 1));
+  grd.addColorStop(1, rgba(rgb, 1));
+  g.fillStyle = grd;
+  const lobes = 5,
+    h = S * 0.4,
+    w = S * 0.12;
+  for (let k = 0; k < lobes; k++) {
+    g.save();
+    g.rotate((k / lobes) * Math.PI * 2);
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.quadraticCurveTo(w, -h * 0.5, 0, -h);
+    g.quadraticCurveTo(-w, -h * 0.5, 0, 0);
+    g.closePath();
+    g.fill();
+    g.restore();
+  }
+  g.shadowBlur = 0;
+  g.strokeStyle = `rgba(${Math.round(rgb[0] * 0.5)},${Math.round(rgb[1] * 0.5)},${Math.round(
+    rgb[2] * 0.5
+  )},0.6)`;
+  g.lineWidth = Math.max(1, S * 0.022);
+  g.beginPath();
+  g.moveTo(0, 0);
+  g.lineTo(0, S * 0.18);
   g.stroke();
   return c;
 }
