@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "snow-filter",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["/tmp/claude-preview/serve.py", "/tmp/claude-preview/snow-filter", "8131"],
+      "port": 8131
+    }
+  ]
+}
