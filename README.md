@@ -1,36 +1,59 @@
-# Snow Filter ❄️
+# Season Filter ❄️🌸☀️🍂
 
-A single-page web app that opens your camera and drops a **body-aware** snow
-effect on the live video. Instead of falling straight through the frame, flakes
-collide with your silhouette and settle into a glowing rim along your head,
-shoulders and arms — and you can **wave a hand to brush the snow away**.
+A single-page web app that opens your camera and drops a **body-aware** falling
+**season** on the live video. Instead of falling straight through the frame,
+particles collide with your silhouette and settle into a glowing rim along your
+head, shoulders and arms — you can **wave to brush them away**, **squeeze a
+handful into a ball and throw it**, and **pull the cord to change season**.
 
-Built to the spec in the project PRD. Original build; the effect mirrors the
-reference clips (`unknownrealityarchive.com`).
+Started as a snow filter (built to the project PRD; the effect mirrors the
+reference clips at `unknownrealityarchive.com`), then extended into all four
+seasons. Repo/folder stay `snow-filter`.
 
 - **Local folder:** `Snow Filter/` — vanilla, no-build ES-module app
   (`index.html`, `styles.css`, `js/`). No backend, no account, nothing recorded
-  or uploaded; everything runs client-side.
+  or uploaded; everything runs client-side. Your season is remembered in
+  `localStorage`.
+
+## Seasons
+
+Pull the cord (or tap it, or press `s`) to cycle through:
+
+| | Season | Particles |
+| --- | --- | --- |
+| ❄️ | Winter | glowing snow (additive) |
+| 🌸 | Spring | cherry-blossom petals + occasional whole blossoms |
+| ☀️ | Summer | warm, slow-drifting light motes |
+| 🍂 | Autumn | tumbling leaves |
+
+Each season is just a theme (shape, palette, blend, physics) over one engine —
+the body-collision rim, in-front occlusion, and squeeze/throw mechanics are
+shared. Add or tune a season by editing the `SEASONS` array in `js/config.js`.
 
 ## How it works
 
 - **Camera** starts only after you tap **Turn on camera** (front camera,
   mirrored selfie view). Denied/no-camera shows a helpful message, not a blank
   screen.
-- **Snow** is a fixed-pool typed-array particle system rendered as soft
-  additive dots so overlaps glow.
+- **Particles** are one fixed-pool typed-array system, drawn with per-season
+  sprites (soft dots, petals, blossoms, leaves) and blend mode.
 - **Body collision** uses MediaPipe **ImageSegmenter** (selfie segmentation):
-  falling flakes that land on a top-facing edge of your silhouette settle into
-  the glowing outline, slough off over time, and re-fall when you move.
-- **Brush-away** uses MediaPipe **HandLandmarker**: a moving palm flings nearby
-  flakes off to the sides — a fast swipe clears more than a slow one.
-- Both models load from a CDN at runtime. If they fail to load, the snow still
-  falls (it just won't collide or respond to your hand) rather than hanging.
+  particles that land on a top-facing edge of your silhouette settle into the
+  glowing outline (heavier on the shoulders), slough off over time, and re-fall
+  when you move. Particles passing in front of your body are hidden, so nothing
+  ever covers your face.
+- **Hands** use MediaPipe **HandLandmarker**: a moving palm flings particles
+  off to the sides; a **closed fist** near the particles gathers them into a
+  ball that follows your hand and keeps absorbing; an **open palm** throws the
+  ball along your hand's motion with an upward arc.
+- All models load from a CDN at runtime. If they fail to load, particles still
+  fall (they just won't collide or respond to your hand) rather than hanging.
 
 ## Controls
 
-- **Snow ON/OFF** (right edge, or `space`) — pauses the snow; camera stays on.
-- **Reset** (centre circle, or `R`) — clears all accumulated snow.
+- **Pull cord** (top, drag/tap, or `s`) — change season.
+- **ON/OFF** (right edge, or `space`) — pauses the effect; camera stays on.
+- **Reset** (centre circle, or `R`) — clears everything on screen.
 - **Help (?)** (top-right, or `?`) — quick explainer.
 - **Switch camera (⟳)** (top-left, mobile) — front/rear.
 

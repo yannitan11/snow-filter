@@ -15,7 +15,7 @@ import { CameraFeed, CAMERA_STATE, describeCameraError } from "./camera.js";
 import { Detector } from "./detection.js";
 import { SnowSystem } from "./snow.js";
 import { UI } from "./ui.js";
-import { RENDER, PERF, SNOW } from "./config.js";
+import { RENDER, PERF, SNOW, SEASONS } from "./config.js";
 
 const canvas = document.getElementById("stage");
 const ctx = canvas.getContext("2d", { alpha: false });
@@ -29,6 +29,11 @@ let snowOn = true;
 let rafId = 0;
 let lastTime = 0;
 let lastVideoTime = -1;
+
+// --- season (winter/spring/summer/autumn), remembered across reloads
+const SEASON_KEY = "seasonfilter.season";
+let seasonIx = loadSeason();
+let clearColor = SEASONS[seasonIx].tint;
 
 // --- adaptive perf state
 let detectEvery = 1; // run detection every N frames
@@ -44,7 +49,31 @@ const ui = new UI({
   onToggleSnow: toggleSnow,
   onReset: () => snow.reset(),
   onFlip: flipCamera,
+  onSeason: nextSeason,
 });
+
+// ---------------------------------------------------------------- seasons
+function loadSeason() {
+  const n = parseInt(localStorage.getItem(SEASON_KEY) ?? "0", 10);
+  return Number.isInteger(n) && n >= 0 && n < SEASONS.length ? n : 0;
+}
+
+function applySeason({ announce = true } = {}) {
+  const theme = SEASONS[seasonIx];
+  snow.setSeason(theme); // swaps sprites/physics + clears the field
+  ui.setSeason(theme, { announce });
+  clearColor = theme.tint;
+  document.documentElement.style.setProperty("--accent", theme.accent);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme.tint);
+  try {
+    localStorage.setItem(SEASON_KEY, String(seasonIx));
+  } catch {}
+}
+
+function nextSeason() {
+  seasonIx = (seasonIx + 1) % SEASONS.length;
+  applySeason();
+}
 
 // ---------------------------------------------------------------- canvas
 function resize() {
@@ -122,7 +151,7 @@ function loop() {
   const ready = camera.state === CAMERA_STATE.live && video.videoWidth > 0;
 
   // ---- draw the mirrored, cover-fit camera frame + compute mapping
-  ctx.fillStyle = "#05070d";
+  ctx.fillStyle = clearColor;
   ctx.fillRect(0, 0, mapping.cW, mapping.cH);
 
   if (ready) {
@@ -194,4 +223,5 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+applySeason({ announce: false }); // set the remembered season without a flash
 ui.showLanding();

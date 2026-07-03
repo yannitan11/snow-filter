@@ -28,11 +28,12 @@
       <!-- Landing (shown first; no camera prompt until the user taps) -->
       <section id="landing" class="screen show">
         <div class="card">
-          <div class="hero">❄️</div>
-          <h1>Snow Filter</h1>
+          <div class="hero">❄️🌸☀️🍂</div>
+          <h1>Season Filter</h1>
           <p>
-            Turn on your camera and let it snow. Flakes gather along your head,
-            shoulders and arms — wave a hand to brush them away.
+            Turn on your camera and let the season fall around you — snow,
+            petals, light, leaves. It gathers on your outline; wave to brush it,
+            squeeze a handful to throw, and pull the cord to change season.
           </p>
           <button id="start-btn" class="primary">Turn on camera</button>
           <p class="fine">
@@ -59,8 +60,24 @@
         </div>
       </section>
 
+      <!-- Season name flash (on switch) -->
+      <div id="season-name" class="season-name" aria-hidden="true"></div>
+
       <!-- On-camera controls -->
       <div id="controls">
+        <!-- Pull cord: drag down (or tap) to change season -->
+        <div id="pull" class="pull" style="--pull: 0px">
+          <div class="pull-cord"></div>
+          <button
+            id="pull-knob"
+            class="pull-knob"
+            title="Pull to change season"
+            aria-label="Change season"
+          >
+            <span id="pull-emoji" class="pull-emoji">❄️</span>
+          </button>
+        </div>
+
         <button id="help-btn" class="round ghost" title="How it works" aria-label="Help">
           ?
         </button>
@@ -88,12 +105,12 @@
         <div class="card">
           <h2>How it works ❄️</h2>
           <ul>
-            <li>Snow falls and <b>collects on your outline</b> as a glowing rim.</li>
-            <li><b>Wave a hand</b> through the snow to fling it off to the sides.</li>
-            <li><b>Make a fist</b> near the snow to squeeze it into a snowball…</li>
+            <li>It falls and <b>collects on your outline</b> as a glowing rim.</li>
+            <li><b>Wave a hand</b> through it to fling it off to the sides.</li>
+            <li><b>Make a fist</b> nearby to squeeze it into a ball…</li>
             <li>…then <b>open your palm</b> to throw it — flick as you release!</li>
-            <li><b>Snow ON/OFF</b> pauses the flakes; the camera stays on.</li>
-            <li>The <b>circle</b> button clears all the snow.</li>
+            <li><b>Pull the cord</b> (top-left) to change season: ❄️ 🌸 ☀️ 🍂</li>
+            <li><b>ON/OFF</b> pauses it; the circle button clears everything.</li>
           </ul>
           <p class="fine">
             Works best with decent lighting and you roughly centred in frame.

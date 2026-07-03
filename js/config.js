@@ -48,6 +48,126 @@ export const SNOW = {
   fallLifetime: 14,
 };
 
+// ---------------------------------------------------------------- Seasons
+// The app is one particle engine themed per season. Each season sets its own
+// look (shape, palette, blend) and physics (fall/flutter/rotation/size); the
+// shared mechanics — body-collision rim, occlusion, squeeze-into-a-ball, throw
+// — carry across all of them. Pull the cord to cycle through in order.
+//
+// `phys`: gravity/gravityVar (px/s²), wind/sway (px/s horizontal), emit
+// (particles/sec), sizeMin/Max (draw radius seed), life (falling lifetime s),
+// alphaMin/Max, rotate (spin the sprite), spin (max rad/s), drawScale (sprite
+// draw size = size × this). `shape`: how the sprite is drawn. `blend`:
+// "lighter" glows (snow, light), "source-over" keeps true colours (petals,
+// leaves). `blossom`: extra whole-flower colours mixed in (spring only).
+export const SEASONS = [
+  {
+    id: "winter",
+    name: "Winter",
+    particle: "Snow",
+    emoji: "❄️",
+    accent: "#7fb8ff",
+    tint: "#05070d",
+    blend: "lighter",
+    shape: "dot",
+    palette: ["#ffffff", "#eaf3ff", "#dbe8ff"],
+    phys: {
+      gravity: SNOW.gravity,
+      gravityVar: SNOW.gravityVariance,
+      wind: SNOW.windAmplitude,
+      sway: SNOW.swayAmplitude,
+      emit: SNOW.emitPerSecond,
+      sizeMin: SNOW.sizeMin,
+      sizeMax: SNOW.sizeMax,
+      alphaMin: SNOW.alphaMin,
+      alphaMax: SNOW.alphaMax,
+      life: SNOW.fallLifetime,
+      rotate: false,
+      spin: 0,
+      drawScale: 5,
+    },
+  },
+  {
+    id: "spring",
+    name: "Spring",
+    particle: "Petals",
+    emoji: "🌸",
+    accent: "#ff9ec7",
+    tint: "#120a12",
+    blend: "source-over",
+    shape: "petal",
+    palette: ["#ffd3e4", "#ffb3d1", "#ff9ec7", "#ffe0ec", "#ffc7a8"],
+    blossom: ["#ffd3e4", "#ffb3d1", "#ffffff"], // occasional whole flowers
+    phys: {
+      gravity: 88,
+      gravityVar: 46,
+      wind: 40,
+      sway: 62, // big flutter — petals drift side to side
+      emit: 300,
+      sizeMin: 7,
+      sizeMax: 13,
+      alphaMin: 0.85,
+      alphaMax: 1.0,
+      life: 16,
+      rotate: true,
+      spin: 2.4,
+      drawScale: 3,
+    },
+  },
+  {
+    id: "summer",
+    name: "Summer",
+    particle: "Light",
+    emoji: "☀️",
+    accent: "#ffd76a",
+    tint: "#0d0a05",
+    blend: "lighter",
+    shape: "dot",
+    palette: ["#fff2c2", "#ffe08a", "#ffd76a", "#eaffcf"],
+    phys: {
+      gravity: 46, // warm motes drift slowly
+      gravityVar: 30,
+      wind: 46,
+      sway: 40,
+      emit: 260,
+      sizeMin: 2.2,
+      sizeMax: 5.5,
+      alphaMin: 0.5,
+      alphaMax: 0.95,
+      life: 18,
+      rotate: false,
+      spin: 0,
+      drawScale: 6,
+    },
+  },
+  {
+    id: "autumn",
+    name: "Autumn",
+    particle: "Leaves",
+    emoji: "🍂",
+    accent: "#ff9d52",
+    tint: "#100a06",
+    blend: "source-over",
+    shape: "leaf",
+    palette: ["#e8792b", "#d24f2a", "#f2a83c", "#c0641f", "#b8862f"],
+    phys: {
+      gravity: 105,
+      gravityVar: 55,
+      wind: 52,
+      sway: 66,
+      emit: 260,
+      sizeMin: 8,
+      sizeMax: 15,
+      alphaMin: 0.9,
+      alphaMax: 1.0,
+      life: 16,
+      rotate: true,
+      spin: 2.8,
+      drawScale: 3,
+    },
+  },
+];
+
 // -------------------------------------------------------- Body collision
 export const COLLISION = {
   // Person-probability threshold (0..1) for "this pixel is the body".
