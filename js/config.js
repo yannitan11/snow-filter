@@ -60,7 +60,13 @@ export const COLLISION = {
   // rim rather than a solid fill.
   settleChance: 0.75,
   // Cap on settled flakes so accumulation never gets infinitely heavy.
-  maxSettled: 1400,
+  maxSettled: 1700,
+  // Snow piles heavier lower down (shoulders/body) than on the head. The
+  // weighting ramps in below `shoulderY` (normalized, 0 = top of frame): edges
+  // there stick more readily and the snow lingers longer before sloughing off.
+  shoulderY: 0.45,
+  shoulderSettleBoost: 1.4, // up to (1+this)× more likely to stick on shoulders
+  shoulderLifeBoost: 1.6, // and lasts up to (1+this)× longer → it builds up
   // Hide falling flakes that pass IN FRONT of the body, so snow never covers
   // the face — it reads as snow falling behind you and settling on top. The
   // glowing rim (settled flakes on top-facing edges) still shows.

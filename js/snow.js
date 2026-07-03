@@ -165,19 +165,31 @@ export class SnowSystem {
         // cover the face/body; only the settled rim shows on the person.
         this.occluded[i] = COLLISION.occludeInFront && here >= thr ? 1 : 0;
 
-        // Settle on a top-facing edge (head/shoulders) → the glowing rim.
+        // Settle on a top-facing edge (head/shoulders) → the glowing rim. Snow
+        // piles heavier lower down: shoulder/body edges stick more readily and
+        // linger longer than the head rim.
         if (here >= thr && this.vy[i] > 0 && this.settled < COLLISION.maxSettled) {
           const nyAbove = (this.py[i] - COLLISION.edgeProbe - mapping.offsetY) * invDispH;
-          if (
-            detector.personProbAt(nx, nyAbove) < thr &&
-            Math.random() < COLLISION.settleChance
-          ) {
-            this.state[i] = 1;
-            this.vx[i] = 0;
-            this.vy[i] = 0;
-            this.life[i] = COLLISION.settledLifetime + rand(0, 2);
-            this.settled++;
-            this.occluded[i] = 0; // this flake is now the rim → show it
+          if (detector.personProbAt(nx, nyAbove) < thr) {
+            // 0 at/above shoulderY (head), ramping to 1 toward the bottom.
+            const lower = Math.min(
+              1,
+              Math.max(0, (ny - COLLISION.shoulderY) / (1 - COLLISION.shoulderY))
+            );
+            const chance = Math.min(
+              1,
+              COLLISION.settleChance * (1 + COLLISION.shoulderSettleBoost * lower)
+            );
+            if (Math.random() < chance) {
+              this.state[i] = 1;
+              this.vx[i] = 0;
+              this.vy[i] = 0;
+              this.life[i] =
+                COLLISION.settledLifetime * (1 + COLLISION.shoulderLifeBoost * lower) +
+                rand(0, 2);
+              this.settled++;
+              this.occluded[i] = 0; // this flake is now the rim → show it
+            }
           }
         }
       } else {
