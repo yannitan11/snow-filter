@@ -16,6 +16,52 @@ const el = (name, attrs) => {
   return e;
 };
 
+// A crayon/chalk filter: fractal-noise displacement gives each stroke a
+// hand-drawn wobble, and a fine grain punched into the alpha gives it a
+// textured, chalky edge. A per-doodle seed keeps them all a little different.
+function crayonFilter(id, seed) {
+  const f = el("filter", {
+    id,
+    x: "-35%",
+    y: "-35%",
+    width: "170%",
+    height: "170%",
+    "color-interpolation-filters": "sRGB",
+  });
+  f.appendChild(el("feTurbulence", {
+    type: "fractalNoise",
+    baseFrequency: "0.05",
+    numOctaves: "4",
+    seed: String((seed * 7 + 1) % 100),
+    stitchTiles: "stitch",
+    result: "warp",
+  }));
+  f.appendChild(el("feDisplacementMap", {
+    in: "SourceGraphic",
+    in2: "warp",
+    scale: "3.4",
+    xChannelSelector: "R",
+    yChannelSelector: "G",
+    result: "wobbled",
+  }));
+  // fine grain → chalky texture (subtle, so shapes stay readable)
+  f.appendChild(el("feTurbulence", {
+    type: "fractalNoise",
+    baseFrequency: "0.9",
+    numOctaves: "2",
+    seed: String((seed * 13 + 5) % 100),
+    result: "grain",
+  }));
+  f.appendChild(el("feColorMatrix", {
+    in: "grain",
+    type: "matrix",
+    values: "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.7 1.05",
+    result: "grainMask",
+  }));
+  f.appendChild(el("feComposite", { in: "wobbled", in2: "grainMask", operator: "in" }));
+  return f;
+}
+
 // concave star / sparkle path (points spikes)
 function starPath(cx, cy, points, outer, inner) {
   let d = "";
@@ -128,11 +174,17 @@ export class Doodles {
         viewBox: "0 0 100 100",
         fill: "none",
         stroke: color,
-        "stroke-width": 4.5,
+        "stroke-width": 5.5,
         "stroke-linecap": "round",
         "stroke-linejoin": "round",
       });
-      (SHAPES[it.type] || SHAPES.sparkle)(color).forEach((p) => svg.appendChild(p));
+      const fid = "crayon" + i;
+      const defs = el("defs", {});
+      defs.appendChild(crayonFilter(fid, i));
+      svg.appendChild(defs);
+      const g = el("g", { filter: `url(#${fid})` });
+      (SHAPES[it.type] || SHAPES.sparkle)(color).forEach((p) => g.appendChild(p));
+      svg.appendChild(g);
 
       const d = document.createElement("div");
       d.className = "doodle " + ANIMS[i % ANIMS.length];
