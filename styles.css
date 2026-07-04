@@ -320,7 +320,7 @@ h2 {
 .pull {
   position: absolute;
   top: 0;
-  right: 42px;
+  right: max(78px, 9vw);
   z-index: 16;
   display: flex;
   flex-direction: column;
