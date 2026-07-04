@@ -15,6 +15,7 @@ import { CameraFeed, CAMERA_STATE, describeCameraError } from "./camera.js";
 import { Detector } from "./detection.js";
 import { SnowSystem } from "./snow.js";
 import { Doodles } from "./doodles.js";
+import { Swirl } from "./swirl.js";
 import { UI } from "./ui.js";
 import { RENDER, PERF, SNOW, SEASONS, SEASONS_ENABLED, WINTER_STYLES } from "./config.js";
 
@@ -25,6 +26,7 @@ const camera = new CameraFeed();
 const detector = new Detector();
 const snow = new SnowSystem();
 const doodles = new Doodles();
+const swirl = new Swirl();
 
 let running = false;
 let snowOn = true;
@@ -38,9 +40,10 @@ let seasonIx = loadSeason();
 let clearColor = SEASONS[seasonIx].tint;
 
 // --- winter style: pull-cord cycles snow / snow+doodles / doodles
-const STYLE_KEY = "seasonfilter.style";
+const STYLE_KEY = "snowfilter.wstyle";
 let styleIx = loadStyle();
 let snowActive = true; // does the current style include falling snow?
+let doodlesActive = false; // does the current style show the doodle overlay?
 
 // --- adaptive perf state
 let detectEvery = 1; // run detection every N frames
@@ -62,14 +65,16 @@ const ui = new UI({
 
 // ---------------------------------------------------------------- styles
 function loadStyle() {
-  const n = parseInt(localStorage.getItem(STYLE_KEY) ?? "0", 10);
-  return Number.isInteger(n) && n >= 0 && n < WINTER_STYLES.length ? n : 0;
+  // Default to "both" (index 1) so the doodles are visible out of the box.
+  const n = parseInt(localStorage.getItem(STYLE_KEY) ?? "1", 10);
+  return Number.isInteger(n) && n >= 0 && n < WINTER_STYLES.length ? n : 1;
 }
 
 function applyStyle({ announce = true } = {}) {
   const st = WINTER_STYLES[styleIx];
   snowActive = st.id !== "doodle"; // "doodle" style turns the snow off
-  doodles.setVisible(st.id !== "snow"); // doodles show in "both" and "doodle"
+  doodlesActive = st.id !== "snow"; // doodles show in "both" and "doodle"
+  doodles.setVisible(doodlesActive);
   ui.setStyle(st, { announce });
   try {
     localStorage.setItem(STYLE_KEY, String(styleIx));
@@ -214,6 +219,7 @@ function loop() {
       lastVideoTime = video.currentTime;
       detector.detect(video, now);
       if (detector.handsReady) snow.hands(mapping, detector.hands, time);
+      if (doodlesActive) swirl.updateFromMask(mapping, detector);
     }
 
     // ---- snow: update + render (OFF or doodle-only style = hidden, camera stays)
@@ -221,6 +227,9 @@ function loop() {
       snow.update(dt, time, mapping, detector, true);
       snow.render(ctx);
     }
+
+    // ---- the wrapping swirl (drawn over the person, with mask occlusion)
+    if (doodlesActive) swirl.draw(ctx, mapping, detector, time);
   }
 
   governPerformance(dt, now);
