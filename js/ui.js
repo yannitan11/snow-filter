@@ -25,7 +25,7 @@ export class UI {
 
     this.pull = document.getElementById("pull");
     this.pullKnob = document.getElementById("pull-knob");
-    this.pullEmoji = document.getElementById("pull-emoji");
+    this.pullLabel = document.getElementById("pull-label");
     this.seasonName = document.getElementById("season-name");
 
     this._particle = "Snow"; // current season's particle name for the toggle
@@ -176,10 +176,11 @@ export class UI {
   }
 
   // Snow-only mode: the cord is a style switch (snow / snow+doodles / doodles).
+  // The knob carries a text label (no emoji), like a real pull-cord toggle.
   setStyle(style, { announce = true } = {}) {
-    this.pullEmoji.textContent = style.emoji;
+    if (this.pullLabel) this.pullLabel.textContent = style.label.toUpperCase();
     if (announce) {
-      this.seasonName.textContent = `${style.emoji} ${style.label}`;
+      this.seasonName.textContent = style.label;
       this.seasonName.classList.remove("show");
       void this.seasonName.offsetWidth;
       this.seasonName.classList.add("show");
@@ -189,14 +190,13 @@ export class UI {
   // Reflect a season change: cord emoji, toggle label, and a brief name flash.
   setSeason(theme, { announce = true } = {}) {
     this._particle = theme.particle;
-    this.pullEmoji.textContent = theme.emoji;
     this.snowToggle.querySelector(".toggle-label").textContent = this.snowToggle.classList.contains(
       "on"
     )
       ? `${theme.particle} ON`
       : `${theme.particle} OFF`;
     if (announce) {
-      this.seasonName.textContent = `${theme.emoji} ${theme.name}`;
+      this.seasonName.textContent = theme.name;
       this.seasonName.classList.remove("show");
       void this.seasonName.offsetWidth;
       this.seasonName.classList.add("show");
