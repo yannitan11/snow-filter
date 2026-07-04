@@ -15,7 +15,6 @@ import { CameraFeed, CAMERA_STATE, describeCameraError } from "./camera.js";
 import { Detector } from "./detection.js";
 import { SnowSystem } from "./snow.js";
 import { Doodles } from "./doodles.js";
-import { Swirl } from "./swirl.js";
 import { UI } from "./ui.js";
 import { RENDER, PERF, SNOW, SEASONS, SEASONS_ENABLED, WINTER_STYLES } from "./config.js";
 
@@ -26,7 +25,6 @@ const camera = new CameraFeed();
 const detector = new Detector();
 const snow = new SnowSystem();
 const doodles = new Doodles();
-const swirl = new Swirl();
 
 let running = false;
 let snowOn = true;
@@ -219,7 +217,6 @@ function loop() {
       lastVideoTime = video.currentTime;
       detector.detect(video, now);
       if (detector.handsReady) snow.hands(mapping, detector.hands, time);
-      if (doodlesActive) swirl.updateFromMask(mapping, detector);
     }
 
     // ---- snow: update + render (OFF or doodle-only style = hidden, camera stays)
@@ -227,9 +224,6 @@ function loop() {
       snow.update(dt, time, mapping, detector, true);
       snow.render(ctx);
     }
-
-    // ---- the wrapping swirl (drawn over the person, with mask occlusion)
-    if (doodlesActive) swirl.draw(ctx, mapping, detector, time);
   }
 
   governPerformance(dt, now);
