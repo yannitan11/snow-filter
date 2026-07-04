@@ -163,10 +163,18 @@ function handMetrics(lm) {
     if (dist(lm[tip], wrist) > dist(lm[pip], wrist)) extended++;
   }
 
+  const size = dist(wrist, lm[9]) || 0.001; // wrist → middle-finger MCP
+  const pinchDist = dist(lm[4], lm[8]) / size; // thumb tip ↔ index tip
+
   return {
     x: cx,
     y: cy,
-    size: dist(wrist, lm[9]) || 0.001, // wrist → middle-finger MCP
+    size,
     open: extended / FINGERS.length,
+    // Pinch (thumb + index together) → used to grab the pull cord. `pinchX/Y`
+    // is the point between the two fingertips (video-normalized coords).
+    pinch: pinchDist < 0.55,
+    pinchX: (lm[4].x + lm[8].x) / 2,
+    pinchY: (lm[4].y + lm[8].y) / 2,
   };
 }

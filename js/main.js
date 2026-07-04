@@ -84,6 +84,53 @@ function cycleStyle() {
   applyStyle();
 }
 
+// ---- Pinch-to-pull the cord with your hand.
+// Pinch (thumb + index) near the knob to grab it, pull down, release to switch.
+let cordGrab = null; // { startY }
+const CORD_GRAB_R = 100; // px: how close the pinch must start to the knob
+const CORD_MAXPULL = 130; // px: knob travel
+const CORD_THRESH = 55; // px: pull past this to trigger a switch
+
+// Returns true while a hand is actively pulling the cord (so snow gestures pause).
+function updateCordGesture(mapping, hands) {
+  const toSimX = (nx) => mapping.offsetX + mapping.dispW * (1 - nx);
+  const toSimY = (ny) => mapping.offsetY + mapping.dispH * ny;
+
+  if (cordGrab) {
+    const h = hands.find((hd) => hd.pinch);
+    if (!h) {
+      // released → switch if pulled far enough
+      const pulled = cordGrab.dy > CORD_THRESH;
+      ui.setCordGrabbing(false);
+      ui.setPull(0);
+      cordGrab = null;
+      if (pulled) {
+        ui.yankCord();
+        cycleStyle();
+      }
+      return false;
+    }
+    const dy = Math.max(0, Math.min(CORD_MAXPULL, toSimY(h.pinchY) - cordGrab.startY));
+    cordGrab.dy = dy;
+    ui.setPull(dy);
+    return true;
+  }
+
+  // not grabbing: start if a pinch begins near the knob
+  const knob = ui.knobCenter();
+  for (const h of hands) {
+    if (!h.pinch) continue;
+    const px = toSimX(h.pinchX);
+    const py = toSimY(h.pinchY);
+    if (Math.hypot(px - knob.x, py - knob.y) < CORD_GRAB_R) {
+      cordGrab = { startY: py, dy: 0 };
+      ui.setCordGrabbing(true);
+      return true;
+    }
+  }
+  return false;
+}
+
 // ---------------------------------------------------------------- seasons
 function loadSeason() {
   if (!SEASONS_ENABLED) return 0; // snow-only: locked to Winter
@@ -216,7 +263,11 @@ function loop() {
     if (video.currentTime !== lastVideoTime && frameNo % detectEvery === 0) {
       lastVideoTime = video.currentTime;
       detector.detect(video, now);
-      if (detector.handsReady) snow.hands(mapping, detector.hands, time);
+      if (detector.handsReady) {
+        // While a hand is pulling the cord, pause snow gestures for that frame.
+        const grabbing = updateCordGesture(mapping, detector.hands);
+        if (!grabbing) snow.hands(mapping, detector.hands, time);
+      }
     }
 
     // ---- snow: update + render (OFF or doodle-only style = hidden, camera stays)

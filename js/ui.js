@@ -112,6 +112,21 @@ export class UI {
     this.pull.classList.add("yank");
   }
 
+  // Hand pinch-pull control (driven by main.js from the camera).
+  setPull(px) {
+    this.pull.style.setProperty("--pull", `${px}px`);
+  }
+  knobCenter() {
+    const r = this.pullKnob.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+  setCordGrabbing(on) {
+    this.pull.classList.toggle("grabbing-hand", on);
+  }
+  yankCord() {
+    this._yank();
+  }
+
   _only(el) {
     for (const s of [this.landing, this.warmup, this.error])
       s.classList.toggle("show", s === el);
